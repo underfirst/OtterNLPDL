@@ -1,0 +1,2 @@
+src/utils/search_project_top.pyで使われる, project topのpathを自動で検知するための目印のファイル.
+ファイル名を変更しないでください.
