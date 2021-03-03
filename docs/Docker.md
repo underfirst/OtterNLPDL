@@ -39,6 +39,6 @@ docker exec -it {container name} /bin/bash
 
 コマンド例
 ```shell
-docker run -it -v `pwd`:/data --name=otter_festival --rm pytorch/pytorch:1.7.1-cuda11.0-cudnn8-runtime /bin/bash 
+docker run --gpus=all -it -v `pwd`:/data --name=otter_festival --rm pytorch/pytorch:1.7.1-cuda11.0-cudnn8-runtime /bin/bash 
 docker exec -it otter_festival /bin/bash
 ```

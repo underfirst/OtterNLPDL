@@ -8,12 +8,19 @@ apt -y update;
 apt -y upgrade;
 apt -y install git vim nano tmux build-essential cmake;
 
-# ssh setting.
+# ssh setting. (わからない人は使用禁止)
 #apt -y install openssh-server;
 #/etc/init.d/ssh restart
 
+cd $PROJECT_TOP;
 pip install pipenv
-pip install torch==1.7.1+cu110 -f https://download.pytorch.org/whl/torch_stable.html
 cp Pipfile.gpu Pipfile
 pipenv install
+
+# see: https://pytorch.org/get-started/locally/
+pip install torch==1.7.1+cu110 -f https://download.pytorch.org/whl/torch_stable.html
+
+
 # inside pipenv shell
+
+
