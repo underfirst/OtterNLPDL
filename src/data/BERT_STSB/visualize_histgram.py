@@ -1,14 +1,17 @@
 import math
-import numpy as np
-import pandas as pd
 from csv import QUOTE_NONE
 # グラフを描画するライブラリ
 from os import path
-from matplotlib import pyplot as plt
+
+import numpy as np
+import pandas as pd
 import seaborn as sns
+from matplotlib import pyplot as plt
+
 sns.set()
 from config.BERT_STSB import RAW_RESOURCE_PATH
 from utils.readlines import readlines
+
 
 def load_labels(mode="train"):
     tsv_path = path.join(RAW_RESOURCE_PATH, f"sts-{mode}.tsv")

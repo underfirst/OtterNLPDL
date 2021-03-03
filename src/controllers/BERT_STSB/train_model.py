@@ -3,16 +3,16 @@ from os import path
 from pathlib import Path
 
 import pytorch_lightning as pl
-from pytorch_lightning.callbacks import EarlyStopping, LearningRateMonitor, ModelCheckpoint
+from pytorch_lightning.callbacks import (EarlyStopping, LearningRateMonitor,
+                                         ModelCheckpoint)
 from pytorch_lightning.loggers import WandbLogger
 from transformers import AutoTokenizer
-from config.BERT_STSB import SEED, GRAD_CLIP_NORM
+
+from config.BERT_STSB import GRAD_CLIP_NORM, SEED
 from config.BERT_STSB.args import parser
 from data.BERT_STSB.data_module import LightningSTSBDataModule
 from models.BERT_STSB.model import LightningBERTClassificationModel
 from utils.slack_manager import SlackManager
-
-
 
 pl.seed_everything(SEED)
 parser = LightningSTSBDataModule.add_args(parser)

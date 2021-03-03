@@ -1,14 +1,17 @@
 from argparse import ArgumentParser
-from os import path, makedirs
-from shutil import rmtree
 from copy import deepcopy
+from os import makedirs, path
+from shutil import rmtree
+
 import torch
 from pytorch_lightning import LightningModule
-from transformers import AutoTokenizer, AutoConfig, AutoModelForSequenceClassification, AdamW, \
-    get_linear_schedule_with_warmup
+from transformers import (AdamW, AutoConfig,
+                          AutoModelForSequenceClassification, AutoTokenizer,
+                          get_linear_schedule_with_warmup)
 
-from config.BERT_STSB import MODEL_TYPE, MODEL_PATH, BEST_MODEL_FOLDER_PREFIX, WARMUP_STEP, WEIGHT_DECAY, \
-    DEFAULT_LEARNING_RATE, ES_METRIC, NUM_LABELS
+from config.BERT_STSB import (BEST_MODEL_FOLDER_PREFIX, DEFAULT_LEARNING_RATE,
+                              ES_METRIC, MODEL_PATH, MODEL_TYPE, NUM_LABELS,
+                              WARMUP_STEP, WEIGHT_DECAY)
 from utils.calc_pearsonr import calc_pearsonr
 from utils.method_output import MethodOutput
 

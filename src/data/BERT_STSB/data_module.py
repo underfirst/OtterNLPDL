@@ -1,11 +1,13 @@
 from argparse import ArgumentParser
-from os import path
 from math import ceil
+from os import path
+
 import numpy as np
 import torch
 from pytorch_lightning import LightningDataModule
-from torch.utils.data import TensorDataset, DataLoader
-from config.BERT_STSB import BATCH_SIZE, RAW_RESOURCE_PATH, SENTENCE, LEVEL
+from torch.utils.data import DataLoader, TensorDataset
+
+from config.BERT_STSB import BATCH_SIZE, LEVEL, RAW_RESOURCE_PATH, SENTENCE
 from utils.readlines import readlines
 
 
@@ -86,6 +88,7 @@ class LightningSTSBDataModule(LightningDataModule):
 
 if __name__ == '__main__':
     from transformers import AutoTokenizer
+
     from config.BERT_STSB import MODEL_TYPE
 
     tokenizer = AutoTokenizer.from_pretrained(MODEL_TYPE)
