@@ -1,14 +1,14 @@
 from argparse import ArgumentParser
-
+from os import path, makedirs
+from shutil import rmtree
+from copy import deepcopy
 import torch
 from pytorch_lightning import LightningModule
-from transformers import (AdamW, AutoConfig,
-                          AutoModelForSequenceClassification, AutoTokenizer,
-                          get_linear_schedule_with_warmup)
+from transformers import AutoTokenizer, AutoConfig, AutoModelForSequenceClassification, AdamW, \
+    get_linear_schedule_with_warmup
 
-from config.BERT_GUG import (BEST_MODEL_FOLDER_PREFIX, DEFAULT_LEARNING_RATE,
-                             ES_METRIC, MODEL_PATH, MODEL_TYPE, NUM_LABELS,
-                             WARMUP_STEP, WEIGHT_DECAY)
+from config.BERT_STSB import MODEL_TYPE, MODEL_PATH, BEST_MODEL_FOLDER_PREFIX, WARMUP_STEP, WEIGHT_DECAY, \
+    DEFAULT_LEARNING_RATE, ES_METRIC, NUM_LABELS
 from utils.calc_pearsonr import calc_pearsonr
 from utils.method_output import MethodOutput
 
@@ -53,11 +53,12 @@ class LightningBERTClassificationModel(LightningModule):
         self.config.num_labels = self.num_labels
         self.model = AutoModelForSequenceClassification.from_pretrained(init_model_info, config=self.config)
 
-    def forward(self, input_ids, labels=None):
+    def forward(self, input_ids, token_type_ids, labels=None):
         max_pad = (input_ids != self.tokenizer.pad_token_id).sum(dim=1).max().cpu().item()
         input_ids = input_ids[:, :max_pad]
+        token_type_ids = token_type_ids[:, :max_pad]
 
-        outputs = self.model(input_ids=input_ids, labels=labels, return_dict=True)
+        outputs = self.model(input_ids=input_ids, token_type_ids=token_type_ids, labels=labels, return_dict=True)
         result = MethodOutput()
         result.logits = outputs.logits
         if labels is not None:
@@ -65,9 +66,7 @@ class LightningBERTClassificationModel(LightningModule):
         return result
 
     def training_step(self, batch, batch_idx, optimizer_idx=None, ):
-        input_ids = batch[0]
-        labels = batch[-1]
-        outputs = self.forward(input_ids=input_ids, labels=labels)
+        outputs = self.forward(input_ids=batch[0], token_type_ids=batch[1], labels=batch[-1])
         loss = outputs.loss
         self.log("train_loss", loss)
         return loss
@@ -76,7 +75,7 @@ class LightningBERTClassificationModel(LightningModule):
         result = MethodOutput()
         input_ids = batch[0]
         labels = batch[-1]
-        outputs = self.forward(input_ids=input_ids, labels=labels)
+        outputs = self.forward(input_ids=batch[0], token_type_ids=batch[1], labels=labels)
         result.loss = outputs.loss
         result.pred = outputs.logits.view(-1, 1)
         result.labels = labels
