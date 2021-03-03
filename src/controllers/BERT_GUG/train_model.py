@@ -45,9 +45,9 @@ callbacks.append(ModelCheckpoint(monitor="dev_pearsonr", save_top_k=1, mode="max
                                  dirpath=path.join(args.model_path, "checkpoint"),
                                  filename="es_pearsonr-{dev_loss:.2f}-{dev_pearsonr:.2f}"))
 
-# wandb_logger = WandbLogger(project="BERT_GUG", name=args.experiment_name, tags=["BERT", "GUG"])
+wandb_logger = WandbLogger(project="BERT_GUG", name=args.experiment_name, tags=["BERT", "GUG"])
 trainer = pl.Trainer(
-    # logger=wandb_logger,
+    logger=wandb_logger,
     default_root_dir=args.model_path,
     callbacks=callbacks,
     gradient_clip_val=GRAD_CLIP_NORM,

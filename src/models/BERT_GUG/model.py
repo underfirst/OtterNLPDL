@@ -120,7 +120,7 @@ class LightningBERTClassificationModel(LightningModule):
         self.log('test_pearsonr', result.pearsonr)
         self.log('test_loss', result.loss)
         if self.test_pred_out:
-            return result.preds
+            self.log('test_preds', result.preds)
 
     def configure_optimizers(self):
         optimizer = AdamW(self.parameters(),
