@@ -1,6 +1,7 @@
 # container内のproject top directoryで実行.
 
 PROJECT_TOP=/data/OtterTemplate/;  # TODO: 要編集
+
 echo "export PYTHONPATH=${PROJECT_TOP}src/" >> ~/.bashrc
 source ~/.bashrc
 

@@ -10,6 +10,7 @@ from config.BERT_GUG import (BEST_MODEL_FOLDER_PREFIX, DEFAULT_LEARNING_RATE,
                              ES_METRIC, MODEL_PATH, MODEL_TYPE, NUM_LABELS,
                              WARMUP_STEP, WEIGHT_DECAY)
 from utils.calc_pearsonr import calc_pearsonr
+from utils.method_output import MethodOutput
 
 
 class LightningBERTClassificationModel(LightningModule):
@@ -37,6 +38,7 @@ class LightningBERTClassificationModel(LightningModule):
         self.default_learning_rate = default_learning_rate
         self.apply_scheduler = apply_scheduler
         self.save_hyperparameters()
+        self.test_pred_out = False
 
         self.current_best_metrics = -float('inf')
 
@@ -68,49 +70,53 @@ class LightningBERTClassificationModel(LightningModule):
         return loss
 
     def eval_step(self, batch):
+        result = MethodOutput()
         input_ids = batch[0]
         labels = batch[-1]
         outputs = self.forward(input_ids=input_ids, labels=labels)
-        loss = outputs[0]
-        pred = outputs[1].view(-1, 1)
-        return loss, labels, pred
+        result.loss = outputs[0]
+        result.pred = outputs[1].view(-1, 1)
+        result.labels = labels
+        return result
 
     def eval_epoch_end(self, eval_step_outputs):
         losses = list()
         labels = list()
         preds = list()
-        for loss, label, pred in eval_step_outputs:
-            losses.append(loss.reshape(1))
-            labels.append(label)
-            preds.append(pred)
+        for result in eval_step_outputs:
+            losses.append(result.loss.reshape(1))
+            labels.append(result.label)
+            preds.append(result.pred)
         loss = torch.mean(torch.cat(losses))
         labels = torch.cat(labels)
         preds = torch.cat(preds)
         eval_pearsonr = torch.tensor(calc_pearsonr(preds.cpu(), labels.cpu()))
-        return loss, eval_pearsonr
+        result = MethodOutput()
+        result.loss = loss
+        result.pearsonr = eval_pearsonr
+        result.preds = preds
+        return result
 
     def validation_step(self, batch, batch_idx, *args, **kwargs):
         return self.eval_step(batch)
 
     def validation_epoch_end(self, val_step_outputs):
-        loss, pearsonr = self.eval_epoch_end(val_step_outputs)
-        self.log('dev_pearsonr', pearsonr, on_step=False, on_epoch=True, prog_bar=True)
-        self.log("dev_loss", loss, on_step=False, on_epoch=True, prog_bar=True)
-        if self.current_best_metrics < pearsonr.item():
-            self.current_best_metrics = pearsonr.item()
-        return loss, pearsonr
+        result = self.eval_epoch_end(val_step_outputs)
+        self.log('dev_pearsonr', result.pearsonr, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("dev_loss", result.loss, on_step=False, on_epoch=True, prog_bar=True)
+        if self.current_best_metrics < result.pearsonr.item():
+            self.current_best_metrics = result.pearsonr.item()
+        return result
 
     def test_step(self, batch, batch_idx, *args, **kwargs):
         return self.eval_step(batch)
 
     def test_epoch_end(self, test_step_outputs, *args, **kwargs):
-        loss, pearsonr = self.eval_epoch_end(test_step_outputs)
-        self.log('test_pearsonr', pearsonr)
-        self.log('test_loss', loss)
-        result = dict()
-        result["test_loss"] = loss
-        result["test_pearsonr"] = pearsonr
-        return result
+        result = self.eval_epoch_end(test_step_outputs)
+        self.log('test_pearsonr', result.pearsonr)
+        self.log('test_loss', result.loss)
+        if self.test_pred_out:
+            return result.preds
 
     def configure_optimizers(self):
         optimizer = AdamW(self.parameters(),
