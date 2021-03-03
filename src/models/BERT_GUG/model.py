@@ -37,7 +37,9 @@ class LightningBERTClassificationModel(LightningModule):
         self.weight_decay = weight_decay
         self.default_learning_rate = default_learning_rate
         self.apply_scheduler = apply_scheduler
+        self.num_labels = num_labels
         self.save_hyperparameters()
+
         self.test_pred_out = False
 
         self.current_best_metrics = -float('inf')
@@ -46,26 +48,27 @@ class LightningBERTClassificationModel(LightningModule):
             self.tokenizer = tokenizer
         else:
             self.tokenizer = AutoTokenizer.from_pretrained(model_type)
-        self.config = AutoConfig.from_pretrained(model_type)
-        self.config.num_labels = num_labels
-        self.model = AutoModelForSequenceClassification.from_pretrained(model_type, config=self.config)
-        if init_pretrained_path is not None:
-            self.load_architecture(init_pretrained_path, tokenizer=tokenizer)
+        init_model_info = model_type if init_pretrained_path is None else init_pretrained_path
+        self.config = AutoConfig.from_pretrained(init_model_info)
+        self.config.num_labels = self.num_labels
+        self.model = AutoModelForSequenceClassification.from_pretrained(init_model_info, config=self.config)
 
     def forward(self, input_ids, labels=None):
         max_pad = (input_ids != self.tokenizer.pad_token_id).sum(dim=1).max().cpu().item()
         input_ids = input_ids[:, :max_pad]
 
         outputs = self.model(input_ids=input_ids, labels=labels, return_dict=True)
+        result = MethodOutput()
+        result.logits = outputs.logits
         if labels is not None:
-            return outputs.loss, outputs.logits
-        return outputs.logits
+            result.loss = outputs.loss
+        return result
 
     def training_step(self, batch, batch_idx, optimizer_idx=None, ):
         input_ids = batch[0]
         labels = batch[-1]
         outputs = self.forward(input_ids=input_ids, labels=labels)
-        loss = outputs[0]
+        loss = outputs.loss
         self.log("train_loss", loss)
         return loss
 
@@ -74,8 +77,8 @@ class LightningBERTClassificationModel(LightningModule):
         input_ids = batch[0]
         labels = batch[-1]
         outputs = self.forward(input_ids=input_ids, labels=labels)
-        result.loss = outputs[0]
-        result.pred = outputs[1].view(-1, 1)
+        result.loss = outputs.loss
+        result.pred = outputs.logits.view(-1, 1)
         result.labels = labels
         return result
 
@@ -83,10 +86,11 @@ class LightningBERTClassificationModel(LightningModule):
         losses = list()
         labels = list()
         preds = list()
-        for result in eval_step_outputs:
-            losses.append(result.loss.reshape(1))
-            labels.append(result.label)
-            preds.append(result.pred)
+        for eval_step_result in eval_step_outputs:
+            eval_step_result = MethodOutput(eval_step_result)
+            losses.append(eval_step_result.loss.reshape(1))
+            labels.append(eval_step_result.labels)
+            preds.append(eval_step_result.pred)
         loss = torch.mean(torch.cat(losses))
         labels = torch.cat(labels)
         preds = torch.cat(preds)
