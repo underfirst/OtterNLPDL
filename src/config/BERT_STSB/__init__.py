@@ -3,6 +3,5 @@ from config.BERT_STSB.const import *
 from config.BERT_STSB.datapath import *
 from utils.set_local_const import set_local_const
 
-
 DEVICE = set_local_const(DEVICE, "cpu")
 
