@@ -1,0 +1,10 @@
+click==7.1.2
+nltk==3.4.3
+requests==2.25.1
+sacrebleu>=1.4.13
+sacremoses
+stanfordnlp
+tupa>=1.3.0
+yattag
+plotly>=4.0.0
+bert_score

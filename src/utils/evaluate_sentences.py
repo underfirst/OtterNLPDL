@@ -16,8 +16,8 @@ def evaluate_sentences(comps, simps, simp_preds, calc_simp_pred_bleu=False, calc
     else:
         refs = [simps]
 
-    bleu = corpus_bleu(simp_preds, refs, tokenizer='none')
-    sari = corpus_sari(comps, simp_preds, refs, tokenizer="none", use_paper_version=False, use_f1_for_deletion=True)
+    bleu = corpus_bleu(simp_preds, refs, force=True, tokenizer='none', lowercase=True)
+    sari = corpus_sari(comps, simp_preds, refs, tokenizer="none", lowercase=True)
     fkgl = corpus_fkgl(simp_preds, tokenizer='none')
     result = (bleu, sari, fkgl)
     if calc_simp_pred_bleu:
